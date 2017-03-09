@@ -1,0 +1,21 @@
+*.egg-info
+*.pot
+*.py[co]
+*.swp
+.tox/
+__pycache__
+*/migrations/
+MANIFEST
+dist/
+docs/_build/
+docs/locale/
+node_modules/
+tests/coverage_html/
+tests/.coverage
+build/
+tests/report/
+
+# Shady developement
+one.sh
+settings/development.py
+
