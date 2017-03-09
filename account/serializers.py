@@ -99,3 +99,12 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class EmailSerializer(serializers.Serializer):
     email = serializers.EmailField(max_length=100, min_length=None, allow_blank=False)
+
+class PasswordModifySerializer(serializers.Serializer):
+    origin = serializers.CharField(write_only=True, required=True,
+            style={'input_type': 'password'}, label='原密码')
+    password = serializers.CharField(write_only=True, required=True,
+            style={'input_type': 'password'}, label='新密码')
+
+
+

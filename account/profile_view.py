@@ -19,7 +19,7 @@ from .models import User
 from rolepermission.models import Role, UserRole
 
 # Serializer
-from .serializers import UserSerializer, CodeConfirmationSerializer, PasswordResetSerializer, ProfileSerializer, EmailSerializer
+from .serializers import UserSerializer, CodeConfirmationSerializer, PasswordResetSerializer, ProfileSerializer, EmailSerializer, PasswordModifySerializer
 
 # Helper function
 from Utils.common import paginate_data, get_client_ip, format_response, get_user_menu
@@ -209,37 +209,29 @@ class PasswordModify(APIView):
     """
     permission_classes =  ([IsAuthenticated,])
     renderer_classes =([JSONRenderer, BrowsableAPIRenderer,])
-    serializer_class = EmailSerializer
+    serializer_class = PasswordModifySerializer
 
-    def put(self, request, format=None):
+    def put(self, request, username, format=None):
         context = {}
         # Permission check
-        try:
-            user = is_admin_or_owner(request, username)
-        except PermissionDenied as e:
-            format_response(context, False, None, '%s'%e)
-            return Response(context, status=status.HTTP_403_FORBIDDEN)
-        except User.DoesNotExist as e:
-            format_response(context, False, None, '当前系统不存在该账户')
-            return Response(context, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            origin = request.data['origin'].strip()
-            password = request.data['password'].strip()
-            duplicate = request.data['duplicate'].strip()
-            if password != duplicate:
-                raise Exception('前后密码不一致')
-            if not user.check_password(origin):
-                raise Exception('原密码错误')
-        except Exception as e:
-            format_response(context, False, None, "非法参数： %s" % e)
-            return Response(context, status.HTTP_400_BAD_REQUEST)
-
-        if settings.PASSWORDCHECK:
-            if not validation_check(password):
-                format_response(context, False, None, '密码复杂度(至少8位，大小写字母+数字)')
+        user = is_admin_or_owner(request, username)
+        serializer = PasswordModifySerializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            # original password check
+            password = data['password']
+            if user.check_password(data['origin']):
+                if settings.PASSWORDCHECK:
+                    if not validation_check(password):
+                        format_response(context, False, None, {'non_field_errors' : '密码复杂度(至少8位，大小写字母+数字)'})
+                        return Response(context, status=status.HTTP_400_BAD_REQUEST)
+                user.set_password(password)
+                user.save()
+                format_response(context, True, None)
+                return Response(context, status=status.HTTP_200_OK)
+            else:
+                format_response(context, False, None, {'non_fields_errors': '旧密码错误，修改密码失败'})
                 return Response(context, status=status.HTTP_400_BAD_REQUEST)
-        user.set_password(password)
-        user.save()
-        format_response(context, True, None)
-        return Response(context, status=status.HTTP_200_OK)
-
+        else:
+            format_response(context, False, None, serializer.errors)
+            return Response(context, status=status.HTTP_400_BAD_REQUEST)
