@@ -46,10 +46,9 @@ class Login(APIView):
     renderer_classes =([JSONRenderer, BrowsableAPIRenderer,])
     serializer_class = LoginSerializer
 
-    #def get_serializer_class(self, *args, **kwargs):
-    #    return self.serializer_class
-    def get_serializer(self):
-    	return self.serializer_class
+    def get_serializer_class(self, *args, **kwargs):
+        return self.serializer_class
+
 
     def post(self, request, format=None):
         context = {}

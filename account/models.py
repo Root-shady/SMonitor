@@ -25,7 +25,7 @@ class CustomUserManager(BaseUserManager):
         return self._create_user(email, username, password, **extra_fields)
 
     def create_superuser(self, email, password, username, **extra_fields):
-        return self._create_user(email, username, password, **extra_fields)
+        return self._create_user(email, username, password, is_admin=True, **extra_fields)
 
     def get_by_natural_key(self, username):
         return self.get(username__iexact=username)
